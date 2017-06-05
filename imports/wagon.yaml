@@ -1,0 +1,20 @@
+inputs:
+
+  plugin_zip:
+    type: string
+
+  wagon_location:
+    default:
+      url: { get_input: plugin_zip }
+
+node_templates:
+
+  wagon:
+    type: cloudify.nodes.SoftwareComponent.Wagon
+    properties:
+      resource_config: { get_input: wagon_location }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: host
+    - type: cloudify.relationships.depends_on
+      target: host_requirements
