@@ -1,0 +1,22 @@
+node_types:
+
+  cloudify.nodes.SoftwareComponent.Wagon:
+    derived_from: cloudify.nodes.SoftwareComponent
+    properties:
+      resource_config:
+        default:
+          url: # can also be file resource packaged with blueprint.
+            required: false
+            type: string
+      port:
+        default: 8080
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/wagon/create.py
+        start:
+          implementation: scripts/wagon/start.py
+        stop:
+          implementation: scripts/wagon/stop.py
+        delete:
+          implementation: scripts/wagon/delete.py

@@ -1,0 +1,39 @@
+inputs:
+
+  agent_user:
+    type: string
+    default: 'centos' # change this for other distros
+
+  agent_user_primary_group:
+    type: string
+    default: 'wheel' # change this other distros
+
+  host_requirements:
+    default:
+      users:
+        - name: { get_input: agent_user }
+          primary-group: { get_input: agent_user_primary_group }
+          shell: /bin/bash
+          sudo: ['ALL=(ALL) NOPASSWD:ALL']
+          ssh-authorized-keys:
+            - { get_secret: agent_key_public }
+      packages: # Change these for apt-based hosts
+        - [epel-release]
+        - [python-wheel]
+        - [python-pip]
+        - [python-setuptools]
+        - [gcc]
+        - [python-devel] # apt python-dev
+        - [libffi-devel] # apt libffi-dev
+        - [openssl-devel] # apt openssl-dev
+        # - [build-essential] for apt system
+
+node_templates:
+
+  host_requirements:
+    type: cloudify.nodes.CloudConfig
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            cloud_config: { get_input: host_requirements }
