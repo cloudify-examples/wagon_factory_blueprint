@@ -1,10 +1,10 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
-  - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.10/plugin.yaml
-  - types/cloud-config.yaml
-  - types/wagon.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.5/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.5/plugin.yaml
   - imports/cloud-config.yaml
   - imports/wagon.yaml
 
@@ -13,27 +13,16 @@ inputs:
   ami:
     description: >
       An AWS AMI. Tested with a Centos 7.0 image.
-    default: ami-ae7bfdb8
+    default: { get_secret: centos_core_image }
 
   instance_type:
     description: >
       The AWS instance_type. Tested with m3.medium, although that is unnecessarily large.
-    default: t2.small
+    default: t2.micro
 
-  use_existing_host:
-    default: false
-
-  host_resource_id:
-    default: wagon_build_host
-
-  nic_resource_id:
-    default: wagon_build_nic
-
-  group_resource_id:
-    default: wagon_build_group
-
-  ip_resource_id:
-    default: wagon_build_ip
+  agent_user:
+    type: string
+    default: 'ec2-user' # change this for other distros
 
 dsl_definitions:
 
@@ -48,8 +37,6 @@ node_templates:
   host:
     type: cloudify.aws.nodes.Instance
     properties:
-      use_external_resource: { get_input: use_existing_host }
-      resource_id: { get_input: host_resource_id }
       agent_config:
         install_method: remote
         user: { get_input: agent_user }
@@ -76,8 +63,6 @@ node_templates:
     type: cloudify.aws.nodes.Interface
     properties:
       aws_config: *aws_config
-      use_external_resource: { get_input: use_existing_host }
-      resource_id: { get_input: nic_resource_id }
     relationships:
       - type: cloudify.aws.relationships.connected_to_subnet
         target: public_subnet
@@ -90,8 +75,6 @@ node_templates:
     type: cloudify.aws.nodes.SecurityGroup
     properties:
       aws_config: *aws_config
-      use_external_resource: { get_input: use_existing_host }
-      resource_id: { get_input: group_resource_id }
       description: SSH Group
       rules:
         - ip_protocol: tcp
@@ -99,8 +82,8 @@ node_templates:
           to_port: 22
           cidr_ip: 0.0.0.0/0
         - ip_protocol: tcp
-          from_port: { get_property: [ wagon, port ] }
-          to_port: { get_property: [ wagon, port ] }
+          from_port: 8080
+          to_port: 8080
           cidr_ip: 0.0.0.0/0
     relationships:
       - type: cloudify.aws.relationships.security_group_contained_in_vpc
@@ -110,8 +93,6 @@ node_templates:
     type: cloudify.aws.nodes.ElasticIP
     properties:
       aws_config: *aws_config
-      use_external_resource: { get_input: use_existing_host }
-      resource_id: { get_input: ip_resource_id }
       domain: vpc
 
   public_subnet:
@@ -142,3 +123,5 @@ outputs:
       - { get_attribute: [ ip, aws_resource_id ] }
       - ":"
       - { get_property: [ wagon, port ] }
+      - '/'
+      - { get_attribute: [ wagon, file ] }

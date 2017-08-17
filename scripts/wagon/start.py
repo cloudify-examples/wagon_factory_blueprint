@@ -23,7 +23,15 @@ def set_pid(_pid):
 
 if __name__ == '__main__':
 
-    wagon_directory = os.path.dirname(ctx.instance.runtime_properties['wagon'])
+    wagon_directory = \
+        ctx.instance.runtime_properties.get(
+            'wagon_create_args', {}).get('archive_destination_dir')
+
+    for li in [filename for filename in os.listdir(wagon_directory)]:
+        if li.endswith('.wgn'):
+            ctx.instance.runtime_properties['file'] = \
+                os.path.join(wagon_directory, li)
+
     port = ctx.node.properties['port']
     pid = run_server(wagon_directory, port)
     set_pid(pid)
