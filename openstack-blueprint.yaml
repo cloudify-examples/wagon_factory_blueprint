@@ -1,25 +1,26 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
-  - http://www.getcloudify.org/spec/openstack-plugin/2.0.1/plugin.yaml
-  - types/cloud-config.yaml
-  - types/wagon.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.2.0/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.5/plugin.yaml
   - imports/cloud-config.yaml
   - imports/wagon.yaml
 
 inputs:
 
   image:
-    type: string
-    description: >
-      A Centos 7.0 image ID.
+    description: Image to be used when launching agent VMs
+    default: { get_secret: centos_core_image }
 
   flavor:
+    description: Flavor of the agent VMs
+    default: { get_secret: large_image_flavor }
+
+  agent_user:
     type: string
-    description: >
-      A small openstack flavor ID of sufficient size to accomodate the image.
-    default: 4
+    default: 'centos' # change this for other distros
 
   use_existing_host:
     default: false
@@ -143,3 +144,5 @@ outputs:
       - { get_attribute: [ ip, floating_ip_address ] }
       - ":"
       - { get_property: [ wagon, port ] }
+      - '/'
+      - { get_attribute: [ wagon, file ] }
